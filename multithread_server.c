@@ -122,7 +122,7 @@ int main(void)
 
 	// Main loop
 	for(;;) {
-        struct sockaddr_un remote; // Client address
+        struct sockaddr_un remote = {0}; // Client address
         socklen_t addrlen;
         int *newfd = malloc(sizeof(int));
         if (!newfd) {
@@ -133,7 +133,7 @@ int main(void)
         *newfd = accept(listener, (struct sockaddr *)&remote, &addrlen);
         if (*newfd == -1) {
             perror("accept");
-            free(newfd);
+            close(newfd);
             continue;
         }
         printf("New connection from %s on socket %d\n", remote.sun_path, *newfd);

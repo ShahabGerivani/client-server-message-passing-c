@@ -13,7 +13,7 @@
 #include "command_utils.h"
 #include "socket_address.h"
 
-#define MAX_REQS_TO_PROCESS 50 // Maximum number of requests that we would process before handling sockets again
+#define MAX_REQS_TO_PROCESS 10 // Maximum number of requests that we would process before handling sockets again
 
 /*
  * Return a listening socket.
@@ -81,7 +81,7 @@ void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
 void handle_new_connection(int listener, int *fd_count,
 		int *fd_size, struct pollfd **pfds)
 {
-	struct sockaddr_un remote; // Client address
+	struct sockaddr_un remote = {0}; // Client address
 	socklen_t addrlen;
 	int newfd;  // Newly accept()ed socket descriptor
 
@@ -111,8 +111,7 @@ void close_connection(int *fd_count, struct pollfd *pfds, int *pfd_i) {
 /*
  * Handle regular client data or client hangups.
  */
-void add_request_to_queue(int listener, int *fd_count,
-		struct pollfd *pfds, int *pfd_i, struct queue *req_queue)
+void add_request_to_queue(int *fd_count, struct pollfd *pfds, int *pfd_i, struct queue *req_queue)
 {
     // Getting data from the socket
     uint16_t req_len;
@@ -182,13 +181,13 @@ void process_connections(int listener, int *fd_count, int *fd_size,
 			} else {
 				// Otherwise we're just a regular client
                 printf("Request from socket %d\n", (*pfds)[i].fd);
-				add_request_to_queue(listener, fd_count, *pfds, &i, req_queue);
+				add_request_to_queue(fd_count, *pfds, &i, req_queue);
 			}
 		}
 	}
 }
 
-void process_requests(struct pollfd **pfds, struct queue *req_queue) {
+void process_requests(struct queue *req_queue) {
     for (int i = 0; !queue_is_empty(req_queue) && i < MAX_REQS_TO_PROCESS; i++) {
         struct request req;
         queue_pop(req_queue, &req);
@@ -271,7 +270,7 @@ int main(void)
 		// Run through connections looking for data to read
 		process_connections(listener, &fd_count, &fd_size, &pfds, &req_queue);
             
-        process_requests(&pfds, &req_queue);
+        process_requests(&req_queue);
 	}
 
 	free(pfds);
