@@ -1,2 +1,4 @@
-./output
-./.vscode
+output/
+.vscode/
+test_queue.c
+testtest.c
